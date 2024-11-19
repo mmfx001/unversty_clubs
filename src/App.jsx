@@ -1,48 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Home from './pages/Home';
+import React from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Shop from './pages/Shop';
+import Sidebar from './components/Sidebar';
+import Profile from './pages/Profile';
+import Home from './pages/Home';
+import Login from './Login';
+import GetPosts from './pages/Products';
+import Purchase_history from './components/Purchase_history';
 import Clubs from './pages/Clubs';
-import Profile from './pages/Profil';
-import Posts from './pages/Posts';
+import Rating from './pages/Rating';
 import Reyting from './pages/Reyting';
+import Posts from './pages/Posts';
 
 const App = () => {
-  const [user, setUser] = useState(null);
+  const location = useLocation(); // Hozirgi joylashuvni olish
 
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-    if (storedUser) {
-      setUser(storedUser);
-    }
-  }, []);
+  const hideSidebarRoutes = ['/login']; // Sidebar ko'rinmasligi kerak bo'lgan yo'nalishlar
+
+  const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname); // Sidebarni ko'rsatish yoki yashirish
 
   return (
-    <Router>
-      {/* Navbar and Sidebar */}
-
-      <div className='flex'>
-        <div>
-          <Sidebar />
-        </div>
-
-        {/* Main content */}
-        <div>
-
-
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/clubs" element={<Clubs />} />
-            <Route path="/profil" element={<Profile />} />
-            <Route path="/posts" element={<Posts />} />
-            <Route path="/reyting" element={<Reyting />} />
-          </Routes>
-        </div>
+    <div className='flex flex-col min-h-screen md:flex-row'>
+      {shouldShowSidebar && <Sidebar />}
+      <div className={`flex-grow pb-20 md:pb-0 ${shouldShowSidebar ? '' : ''}`}>
+        <Routes>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/posts" element={<Posts />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/login" element={<Login />} />
+          <Route path='/history' element={<Purchase_history />} />
+          <Route path="/clubs" element={<Clubs />} />
+          <Route path="/rating" element={<Reyting />} />
+        </Routes>
       </div>
-
-    </Router>
+    </div>
   );
 };
 

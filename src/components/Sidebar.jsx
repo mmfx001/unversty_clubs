@@ -1,70 +1,76 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { Users, Home, ShoppingBag, ClubIcon as Clubs, User, FileText, Star, LogOut } from 'lucide-react';
 
 const Sidebar = () => {
-  const [userData, setUserData] = useState(null);
+  const [isOpen, setIsOpen] = useState(true);
 
-  // Fetch user data from the API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('https://unversty-2.onrender.com/users');
-        // Assume the first user for simplicity, change as needed
-        setUserData(response.data[0]);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const navigation = [
+    { name: "Home", href: "/", icon: Home },
+    { name: "Shop", href: "/shop", icon: ShoppingBag },
+    { name: "Clubs", href: "/clubs", icon: Clubs },
+    { name: "Profile", href: "/profile", icon: User },
+    { name: "Posts", href: "/posts", icon: FileText },
+    { name: "Rating", href: "/rating", icon: Star },
+  ];
 
   return (
-    <div className="w-64 h-screen bg-purple-100 p-6 flex flex-col items-center justify-between">
-      {/* User Profile Picture */}
-      <div className="flex flex-col items-center">
-        <div className="w-24 h-24 bg-blue-500 rounded-full mb-4 flex items-center justify-center">
-          <img
-            src={userData?.img || 'https://joybox.uz/wp-content/uploads/default-user.png'}
-            alt="User Profile"
-            className="w-full h-full object-cover rounded-full"
-          />
+    <div className={`flex flex-col h-screen ${isOpen ? 'w-[250px]' : 'w-[80px]'} bg-gradient-to-b from-indigo-500 to-indigo-700 shadow-lg text-white transition-all duration-300`}>
+      {/* User Info Section */}
+      <div className="p-4">
+        <div className="flex flex-col items-center space-y-2 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-400 shadow-lg">
+            <Users className="h-8 w-8 text-white" />
+          </div>
+          {isOpen && (
+            <div className="space-y-1">
+              <h2 className="text-lg font-medium">O'quvchi haqida</h2>
+              <p className="text-sm text-indigo-200">Malumotlar</p>
+            </div>
+          )}
         </div>
-        <button className="bg-orange-200 px-4 py-2 rounded mb-4">
-          o'quvchi haqida malumotlar
+      </div>
+
+      {/* Navigation */}
+      <div className="flex-1 overflow-auto p-4">
+        {isOpen && (
+          <div className="mb-4">
+            <h3 className="px-2 text-lg font-semibold">Menyular:</h3>
+          </div>
+        )}
+        <nav>
+          {navigation.map((item) => (
+            <a
+              key={item.name}
+              href={item.href}
+              className={`flex items-center ${isOpen ? 'justify-start' : 'justify-center'} w-full px-3 py-3 mb-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 transition-all shadow-md`}
+            >
+              <item.icon className="h-5 w-5 text-white" />
+              {isOpen && <span className="ml-4 font-medium">{item.name}</span>}
+            </a>
+          ))}
+        </nav>
+      </div>
+
+      {/* Logout Button */}
+      <div className="p-4">
+        <button
+          className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg flex items-center justify-center transition-all"
+          onClick={() => {
+            console.log("Logging out...");
+          }}
+        >
+          <LogOut className="h-5 w-5" />
+          {isOpen && <span className="ml-2">Log out</span>}
         </button>
       </div>
 
-      {/* Menu Links */}
-      <div className="bg-orange-200 p-4 rounded mb-4 w-full text-center">
-        <p className="font-semibold mb-2">Menyular:</p>
-        <p className="mb-1">
-          <Link to="/" className="hover:text-blue-500">Home</Link>
-        </p>
-        <p className="mb-1">
-          <Link to="/shop" className="hover:text-blue-500">Shop</Link>
-        </p>
-        <p className="mb-1">
-          <Link to="/clubs" className="hover:text-blue-500">Clubs</Link>
-        </p>
-        <p className="mb-1">
-          <Link to="/profil" className="hover:text-blue-500">Profil</Link>
-        </p>
-        <p className="mb-1">
-          <Link to="/posts" className="hover:text-blue-500">Posts</Link>
-        </p>
-        <p className="mb-1">
-          <Link to="/reyting" className="hover:text-blue-500">Reyting</Link>
-        </p>
-      </div>
-
-      {/* Log Out Button */}
-      <div>
-        <button className="bg-yellow-400 text-black px-6 py-2 rounded">
-          Log out
-        </button>
-      </div>
+      {/* Toggle Sidebar Button */}
+      <button
+        className="absolute top-4 right-4 bg-indigo-500 text-white p-2 rounded-full shadow-lg hover:bg-indigo-600 transition-all"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {isOpen ? '←' : '→'}
+      </button>
     </div>
   );
 };
