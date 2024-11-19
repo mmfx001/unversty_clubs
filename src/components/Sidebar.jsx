@@ -55,7 +55,7 @@ const Sidebar = () => {
           <Link to="/posts" className="hover:text-blue-500">Posts</Link>
         </p>
         <p className="mb-1">
-          <Link to="/reyting" className="hover:text-blue-500">Posts</Link>
+          <Link to="/reyting" className="hover:text-blue-500">Reyting</Link>
         </p>
       </div>
 
