@@ -3,19 +3,22 @@ import axios from 'axios';
 import CommentModal from '../components/CommentModal';
 
 const LoadingSpinner = () => (
-  <div className="flex justify-center items-center h-screen ">
-    <div className="animate-spin rounded-full h-16 w-16 border-t-4  border-blue-500 border-solid"></div>
+  <div className="flex justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-solid"></div>
   </div>
 );
 
-const HeartIcon = ({ isLiked, onClick, likeCount }) => (
+const HeartIcon = ({ isLiked, onClick, likeCount, disabled }) => (
   <div className="flex items-center space-x-2">
     <svg
       onClick={(e) => {
+        if (disabled) return;
         e.stopPropagation();
         onClick();
       }}
-      className={`w-8 h-8 fill-current transition-colors duration-300 ${isLiked ? 'text-red-500' : 'text-gray-400'} hover:text-red-500 cursor-pointer`}
+      className={`w-8 h-8 fill-current transition-colors duration-300 ${isLiked ? 'text-red-500' : 'text-gray-400'} ${
+        disabled ? 'cursor-not-allowed opacity-50' : 'hover:text-red-500 cursor-pointer'
+      }`}
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
     >
@@ -32,38 +35,32 @@ const Posts = () => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [likedStates, setLikedStates] = useState({});
-  const [loading, setLoading] = useState(true); // New loading state
+  const [loading, setLoading] = useState(true);
   const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await axios.get('https://unversty-2.onrender.com/posts');
-        setData(response.data);
+        const [postsResponse, usersResponse] = await Promise.all([
+          axios.get('https://unversty-2.onrender.com/posts'),
+          axios.get('https://unversty-2.onrender.com/users'),
+        ]);
+
+        setData(postsResponse.data);
+        setUsers(usersResponse.data);
+
         const initialLikedStates = {};
-        response.data.forEach((item) => {
+        postsResponse.data.forEach((item) => {
           initialLikedStates[item._id] = false;
         });
         setLikedStates(initialLikedStates);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPosts();
-  }, []);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get('https://unversty-2.onrender.com/users');
-        setUsers(response.data);
+        // Initialize liked states for logged-in user
         if (loggedInUser) {
-          const user = response.data.find((u) => u.email === loggedInUser.email);
+          const user = usersResponse.data.find((u) => u.email === loggedInUser.email);
           if (user) {
             const userLikedItems = user.likeItems || [];
-            const updatedLikedStates = { ...likedStates };
+            const updatedLikedStates = { ...initialLikedStates };
             userLikedItems.forEach((id) => {
               updatedLikedStates[id] = true;
             });
@@ -71,18 +68,58 @@ const Posts = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchUsers();
+    fetchPosts();
   }, [loggedInUser]);
 
   const handleLikeToggle = async (post) => {
-    if (!loggedInUser) {
-      alert('Please log in to like a post.');
+    if (!loggedInUser || loggedInUser.email === 'guest@example.com') {
+      alert('Guests cannot like posts.');
       return;
     }
-    // (Existing like toggle logic here)
+
+    const user = users.find((user) => user.email === loggedInUser.email);
+    if (!user) {
+      console.error('User not found.');
+      return;
+    }
+
+    const isPostLiked = likedStates[post._id];
+    const updatedLikedItems = isPostLiked
+      ? user.likeItems.filter((id) => id !== post._id)
+      : [...(user.likeItems || []), post._id];
+
+    const updatedUser = {
+      ...user,
+      likeItems: updatedLikedItems,
+    };
+
+    const updatedPost = {
+      ...post,
+      likes: isPostLiked ? post.likes - 1 : post.likes + 1,
+    };
+
+    try {
+      await axios.put(`https://unversty-2.onrender.com/users/${user._id}`, updatedUser);
+      await axios.put(`https://unversty-2.onrender.com/posts/${post._id}`, updatedPost);
+
+      setUsers((prevUsers) =>
+        prevUsers.map((u) => (u.email === loggedInUser.email ? updatedUser : u))
+      );
+      setData((prevData) =>
+        prevData.map((p) => (p._id === post._id ? updatedPost : p))
+      );
+      setLikedStates((prevStates) => ({
+        ...prevStates,
+        [post._id]: !isPostLiked,
+      }));
+    } catch (error) {
+      console.error('Error updating like status:', error);
+    }
   };
 
   const handleCardClick = (post) => {
@@ -104,48 +141,66 @@ const Posts = () => {
 
   if (loading) return <LoadingSpinner />;
 
-
   return (
-    <div className=" w-full items-center justify-center mx-auto p-4 h-screen">
-      <div className="max-w-xl mx-auto p-5 mt-10 overflow-auto" style={{ maxHeight: '90vh' }}>
-        <div className="flex flex-col space-y-6">
+    <div className="w-full flex items-center justify-center bg-gray-100 py-8">
+      <div className="max-w-3xl w-full mx-auto p-4 lg:p-6 overflow-hidden">
+        <div className="flex flex-col space-y-8">
           {data.length === 0 ? (
-            <p className="text-center text-lg font-poppins">No posts available at the moment.</p>
+            <p className="text-center text-lg font-poppins text-gray-600">
+              No posts available at the moment.
+            </p>
           ) : (
-            data.map((post) => (
-              <div key={post._id} className="bg-white p-4 rounded-lg shadow-lg">
-                <div className="flex items-center space-x-3 mb-4">
-                  {loggedInUser && (
-                    <img
-                      src={loggedInUser.img} // Use the image from the fetched user data
-                      alt={loggedInUser.name} // Use the name from the fetched user data
-                      className="w-12 h-12 rounded-full border-2 border-blue-500"
-                    />
-                  )}
-                  <h3 className="text-lg font-bold">{post.title}</h3>
-                </div>
-                <p className="text-gray-600 mb-5">{post.description}</p>
-                <img
-                  src={post.image}
-                  alt={post.title}
-                  className="w-full h-64 object-cover rounded-md mb-2"
-                />
-                <p className="text-md mb-2">{post.datetime}</p>
-                <div className="flex justify-between items-center">
-                  <HeartIcon
-                    isLiked={likedStates[post._id]}
-                    onClick={() => handleLikeToggle(post)}
-                    likeCount={post.likes}
+            data.map((post) => {
+              const postUser = users.find((user) => user._id === post.userid); // Match user by userid
+              return (
+                <div
+                  key={post._id}
+                  className="bg-white p-4 rounded-lg duration-200 shadow-lg shadow-indigo-200"
+                >
+                  <div className="flex items-center space-x-4 mb-4">
+                    {postUser && (
+                      <img
+                        src={postUser.img}
+                        alt={postUser.name}
+                        className="w-10 h-10 rounded-full"
+                      />
+                    )}
+                    <div className="flex flex-col">
+                      <h3 className="text-lg font-semibold text-gray-800">{post.title}</h3>
+                      <p className="text-sm text-gray-500">{postUser?.name}</p>
+                    </div>
+                  </div>
+
+                  {/* Image */}
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-[400px] object-cover rounded-md mb-4"
                   />
-                  <button
-                    onClick={() => handleCardClick(post)}
-                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                  >
-                    Izohlar
-                  </button>
+
+                  {/* Post Details */}
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center space-x-3">
+                      <HeartIcon
+                        isLiked={likedStates[post._id]}
+                        onClick={() => handleLikeToggle(post)}
+                        disabled={loggedInUser && loggedInUser.email === 'guest@example.com'} // Disable like if guest
+                      />
+                      <span className="text-md text-gray-600">{post.likes} Likes</span>
+                    </div>
+                    <button
+                      onClick={() => handleCardClick(post)}
+                      className="px-4 py-2 text-sm bg-gray-200 rounded-full hover:bg-gray-300 transition-colors duration-200"
+                    >
+                      Izohlar
+                    </button>
+                  </div>
+
+                  {/* Post Caption */}
+                  <p className="text-sm text-gray-800">{post.description}</p>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

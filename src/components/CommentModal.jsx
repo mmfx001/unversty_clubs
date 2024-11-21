@@ -5,6 +5,7 @@ import axios from 'axios';
 const CommentModal = ({ isOpen, onClose, onCommentSubmit, allComments, productId, userEmail }) => {
     const [newComment, setNewComment] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
 
     if (!isOpen) return null;
 
@@ -42,48 +43,55 @@ const CommentModal = ({ isOpen, onClose, onCommentSubmit, allComments, productId
     };
 
     return ReactDOM.createPortal(
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-60 z-50">
+            <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md relative max-h-[90vh] flex flex-col">
                 <button
                     onClick={onClose}
-                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl"
+                    className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl"
                 >
                     &times;
                 </button>
 
-                <h2 className="text-2xl font-bold mb-4">Izohlar</h2>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Izohlar</h2>
                 <div className="flex-1 overflow-y-auto mb-4">
                     {filteredComments.length === 0 ? (
-                        <p className="text-gray-500">Hozircha hech qanday izoh yo'q.</p>
+                        <p className="text-gray-500 text-center">Hozircha hech qanday izoh yo'q.</p>
                     ) : (
                         filteredComments.map((comment) => (
-                            <div key={comment._id} className="mb-4 p-3 border border-gray-200 rounded-md">
-                                <p className="font-semibold">{comment.user_id}</p>
-                                <p className="mt-1">{comment.text}</p>
-                                <p className="text-gray-500 text-sm mt-1">
-                                    {comment.time}
-                                </p>
+                            <div key={comment._id} className="mb-4 p-4 border-b border-gray-200">
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0"></div>
+                                    <p className="font-semibold text-sm text-gray-800">{comment.user_id}</p>
+                                </div>
+                                <p className="mt-2 text-sm text-gray-700">{comment.text}</p>
+                                <p className="text-gray-500 text-xs mt-1">{comment.time}</p>
                             </div>
                         ))
                     )}
                 </div>
+                
                 {errorMessage && (
                     <p className="text-red-500 text-sm mb-2">{errorMessage}</p>
                 )}
-                <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Izoh qo'shing..."
-                    className="w-full p-3 border border-gray-300 rounded-md mb-4 resize-none"
-                    rows="6"
-                />
-                <button
-                    onClick={handleCommentSubmit}
-                    className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                >
-                    Izohni yuborish
-                </button>
+
+                <div className="mt-4">
+                    <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Izoh qo'shing..."
+                        className="w-full p-3 border border-gray-300 rounded-lg mb-4 resize-none"
+                        rows="4"
+                        disabled={loggedInUser.email == "guest@example.com"}
+
+                    />
+                    <button
+                        onClick={handleCommentSubmit}
+                        className="w-full p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                        Izohni yuborish
+                    </button>
+                </div>
             </div>
         </div>,
         document.body

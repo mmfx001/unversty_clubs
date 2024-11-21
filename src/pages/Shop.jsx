@@ -33,14 +33,19 @@ export default function Shop() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
 
-  // Загрузка данных пользователя
+  // Check if the user is a guest
+  const isGuestUser = loggedInUser && loggedInUser.email === "guest@example.com";
+
   useEffect(() => {
-    fetch('https://unversty-2.onrender.com/users/6736489a0ef973f3f1448e86')
-      .then(res => res.json())
-      .then(data => setUserData(data))
-      .catch(error => console.error("Error fetching user data:", error));
-  }, []);
+    if (loggedInUser && !isGuestUser) {
+      fetch(`https://unversty-2.onrender.com/users/${loggedInUser._id}`)
+        .then(res => res.json())
+        .then(data => setUserData(data))
+        .catch(error => console.error("Error fetching user data:", error));
+    }
+  }, [loggedInUser, isGuestUser]);
 
   // Загрузка данных продуктов
   useEffect(() => {
@@ -124,7 +129,7 @@ export default function Shop() {
               <span className="text-sm md:text-base">Xaridlar tarixi</span>
             </Link>
             <div className="text-[#4A66D3] font-semibold text-sm md:text-base">
-              Монеты: {userData ? userData.tokens[0].quantity : 0}
+              Монеты: {isGuestUser ? 0 : userData ? userData.tokens[0].quantity : 0}
             </div>
             <Link to='/history' className="md:hidden text-[#4A66D3]">
               <Clock className='w-5 h-5' />
@@ -160,9 +165,18 @@ export default function Shop() {
                   <button
                     className="w-full bg-[#4A66D3] pointer text-white py-2 px-4 rounded text-sm md:text-base hover:bg-[#3a51a6] transition-colors mt-4"
                     onClick={() => openConfirmationModal(product)}
-                    disabled={!userData || userData.tokens[0].quantity < product.cost || product.quantity === 0}
+                    disabled={
+                      !userData || // Ensure that the userData is loaded
+                      userData.tokens[0].quantity < product.cost || // User doesn't have enough tokens
+                      product.quantity === 0 || // Product is out of stock
+                      isGuestUser // If the logged-in user is a guest
+                    }
                   >
-                    {userData && userData.tokens[0].quantity < product.cost || product.quantity === 0 ? 'Недостаточно средств' : 'Купить'}
+                    {
+                      !userData || userData.tokens[0].quantity < product.cost || product.quantity === 0
+                        ? 'Недостаточно средств'
+                        : 'Купить'
+                    }
                   </button>
                 </div>
               </Card>
@@ -179,24 +193,25 @@ export default function Shop() {
               <img
                 src={selectedProduct.img}
                 alt={selectedProduct.name}
-                className="h-40 w-full object-contain mb-2"
+                className="h-40 sm:h-48 w-full object-contain p-2"
               />
-              <h3 className="text-lg font-semibold">{selectedProduct.name}</h3>
-              <p className="text-sm text-gray-600">Стоимость: {selectedProduct.cost} Монет</p>
-              <p className="text-sm text-gray-600">Доступно: {selectedProduct.quantity} шт.</p>
+              <div className="mt-2 flex justify-between">
+                <span className="font-semibold text-lg">{selectedProduct.name}</span>
+                <span className="font-bold text-lg">{selectedProduct.cost} монет</span>
+              </div>
             </div>
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-between mt-4">
               <button
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
-                onClick={closeConfirmationModal}
+                onClick={handlePurchase}
+                className="px-6 py-2 bg-green-500 text-white rounded-md"
               >
-                Отмена
+                Подтвердить
               </button>
               <button
-                className="px-4 py-2 bg-[#4A66D3] text-white rounded hover:bg-[#3a51a6] transition-colors"
-                onClick={handlePurchase}
+                onClick={closeConfirmationModal}
+                className="px-6 py-2 bg-red-500 text-white rounded-md"
               >
-                Подтвердить покупку
+                Отменить
               </button>
             </div>
           </div>
