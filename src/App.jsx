@@ -11,7 +11,8 @@ import Reyting from './pages/Reyting';
 import Posts from './pages/Posts';
 import PrivateRoute from './PrivateRoute';
 import Profil from './pages/Profil';
-
+import Create from './pages/CreatePost';
+import ClubProfile from './pages/ClubProfile';
 
 const App = () => {
   const location = useLocation();
@@ -22,14 +23,6 @@ const App = () => {
     const savedState = localStorage.getItem("sidebarState");
     return savedState !== "hide";
   });
-  const [isGuest, setIsGuest] = useState(false);
-
-  useEffect(() => {
-    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-    if (loggedInUser && loggedInUser.email === "guest@example.com") {
-      setIsGuest(true); // If the email is guest, set the guest flag
-    }
-  }, []);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -65,7 +58,6 @@ const App = () => {
           isMobile={isMobile}
           isOpen={isOpen}
           toggleSidebar={toggleSidebar}
-          isGuest={isGuest} // Pass the guest status to the sidebar
         />
       )}
 
@@ -83,7 +75,15 @@ const App = () => {
           {/* Login Page */}
           <Route path="/" element={<Login />} />
 
-          {/* Private Routes based on whether the user is logged in or a guest */}
+          {/* Private Routes */}
+          <Route
+            path="/clubprofile"
+            element={
+              <PrivateRoute guestOnly={false}>
+                <ClubProfile />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/home"
             element={
@@ -103,19 +103,12 @@ const App = () => {
           <Route
             path="/posts"
             element={
-              <PrivateRoute guestOnly={true}>
+              <PrivateRoute guestOnly={false}>
                 <Posts />
               </PrivateRoute>
             }
           />
-          <Route
-            path="/shop"
-            element={
-              <PrivateRoute guestOnly={true}>
-                <Shop />
-              </PrivateRoute>
-            }
-          />
+        
           <Route
             path="/history"
             element={
@@ -127,7 +120,7 @@ const App = () => {
           <Route
             path="/clubs"
             element={
-              <PrivateRoute guestOnly={true}>
+              <PrivateRoute guestOnly={false}>
                 <Clubs />
               </PrivateRoute>
             }
@@ -137,6 +130,14 @@ const App = () => {
             element={
               <PrivateRoute guestOnly={false}>
                 <Reyting />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/create"
+            element={
+              <PrivateRoute guestOnly={false}>
+                <Create />
               </PrivateRoute>
             }
           />

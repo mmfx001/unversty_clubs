@@ -7,10 +7,7 @@ const PrivateRoute = ({ children, guestOnly }) => {
         return <Navigate to="/" />; // Redirect to login if no logged-in user
     }
 
-    // Check if the user is a guest and not allowed to access certain routes
-    if (loggedInUser.role === 'guest' && !guestOnly) {
-        return <Navigate to="/clubs" />; // Redirect guests to clubs page
-    }
+ 
 
     return children;
 };

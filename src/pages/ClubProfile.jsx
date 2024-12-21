@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
-import ClubProfilPosts from "./ProfilPosts";
+import ClubPosts from "./ClubPost";
 
-function Profile() {
-    const club = JSON.parse(localStorage.getItem('loggedInUser'))
+function ClubProfile() {
+    const location = useLocation();
+    const club = location.state?.club;
 
     const [followers, setFollowers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ function Profile() {
         <div className="flex flex-col sm:flex-row items-start justify-center gap-8">
             {/* Klub Postlar */}
             <div className="bg-white w-full sm:w-3/4 lg:w-2/3 p-2 h-[440px] rounded-lg shadow-lg mx-auto">
-                <ClubProfilPosts />
+                <ClubPosts />
             </div>
     
             {/* Followerlarni ko'rsatish */}
@@ -122,4 +124,4 @@ function Profile() {
     );
 }
 
-export default Profile;
+export default ClubProfile;
